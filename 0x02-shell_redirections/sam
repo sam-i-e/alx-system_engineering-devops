@@ -1,0 +1,16 @@
+#!/bin/bash
+
+git status
+
+git add .
+
+quotation=' " '
+
+echo "Type your commit message below, sam"
+read commit
+
+git commit -m $quotation"$commit"$quotation
+
+git push
+
+git status
