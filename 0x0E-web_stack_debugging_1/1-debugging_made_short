@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Configure and listen to port 80 but show the service is not running
+ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
+service nginx start
+kill "$(pgrep 'nginx' | head -1)"

@@ -1,0 +1,11 @@
+[[O#!/usr/bin/env bash
+# Configures nginx to run on the port 80
+
+# Remove the file before creating a symbolic link
+rm /etc/nginx/sites-enabled/default
+
+# Create a sym link to make sure the default site is enabled
+ln -s /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
+
+# Restart the nginx service
+service nginx restart
