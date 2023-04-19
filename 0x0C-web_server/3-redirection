@@ -1,19 +1,30 @@
 #!/usr/bin/env bash
-# Installs and sets up a simple Nginx web server on web-01
-ROOT_FILE_PATH="/var/www/html/index.html"
-SERVER_BLOCK_PATH="/etc/nginx/sites-available/default"
+# This script Installs, configures, and starts the server
+apt-get update
+apt-get -y install nginx
+sudo ufw allow 'Nginx HTTP'
+mkdir -p /var/www/html/
+sudo chmod -R 755 /var/www
+echo 'Hello World!' > /var/www/html/index.html
+SERVER_CONFIG=\
+"server {
+	listen 80 default_server;
+	listen [::]:80 default_server;
+	root /var/www/html;
+	index index.html index.htm index.nginx-debian.html;
+	server_name _;
+	location / {
+		try_files \$uri \$uri/ =404;
+	}
+	if (\$request_filename ~ redirect_me){
+		rewrite ^ https://sketchfab.com/bluepeno/models permanent;
+	}
+}"
 
-TO_APPEND="\tlocation /redirect_me {\n\t\treturn 301 https://www.youtube.com/watch?v=QH2-TGUlwu4\$request_uri;\n\t}"
+bash -c "echo -e '$SERVER_CONFIG' > /etc/nginx/sites-enabled/default"
 
-sudo apt-get update
-sudo apt-get -y install nginx
-sudo touch "$ROOT_FILE_PATH"
-sudo chmod a+w "$ROOT_FILE_PATH"
-echo "Hello World!" > "$ROOT_FILE_PATH"
-sudo chmod a-w "$ROOT_FILE_PATH"
-
-# Inserting changes into the folder
-sudo sed -i "46 a\ $TO_APPEND" "$SERVER_BLOCK_PATH"
-
-# Restart server
-sudo service nginx restart
+if [ "$(pgrep -c nginx)" -le 0 ]; then
+	service nginx start
+else
+	service nginx restart
+fi
