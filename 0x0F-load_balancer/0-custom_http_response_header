@@ -1,26 +1,26 @@
 #!/usr/bin/env bash
-# Installs and sets up a simple Nginx web server on web-01
-ROOT_PATH="/var/www/html"
-ROOT_FILE_PATH="$ROOT_PATH/index.html"
-ERROR_FILE="/error.html"
-ERROR_FILE_PATH="$ROOT_PATH$ERROR_FILE"
-SERVER_BLOCK_PATH="/etc/nginx/sites-available/default"
-
-REDIRECTION="\n\tlocation /redirect_me {\n\t\treturn 301 https://www.youtube.com/watch?v=QH2-TGUlwu4\$request_uri;\n\t}"
-CUSTOM_ERROR="\n\terror_page 404 $ERROR_FILE;\n\tlocation = $ERROR_FILE {\n\t\troot $ROOT_PATH;\n\t\tinternal;\n\t}\n\tadd_header X-Served-By $HOSTNAME;\n"
+# Configure Nginx so that its HTTP response contains a custom
+# header (on web-01 and web-02).
+# The name of the custom HTTP header must be X-Served-By
 
 sudo apt-get update
-sudo apt-get -y install nginx
-sudo touch "$ROOT_FILE_PATH"
-sudo touch "$ERROR_FILE_PATH"
-sudo chmod a+w "$ROOT_FILE_PATH" "$ERROR_FILE_PATH"
-echo "Hello World!" > "$ROOT_FILE_PATH"
-echo "Ceci n'est pas une page" > "$ERROR_FILE_PATH"
-sudo chmod a-w "$ROOT_FILE_PATH" "$ERROR_FILE_PATH"
+sudo apt-get install nginx -y
 
-# Inserting changes into the folder
-sudo sed -i "46 a\ $REDIRECTION" "$SERVER_BLOCK_PATH"
-sudo sed -i "50 a\ $CUSTOM_ERROR" "$SERVER_BLOCK_PATH"
+# create a hello world page
+echo "Hello World!" | sudo tee /var/www/html/index.html
 
-# Restart server
+# create a redirection for our website
+sudo sed -i '/server_name _;/a \	location /redirect_me {\n		return 301 https://www.youtube.com/watch?v=QH2-TGUlwu4;\n	}' /etc/nginx/sites-available/default
+
+
+# Create a custom 404 page
+echo "Ceci n'est pas une page" | sudo tee /var/www/html/custom_404.html
+
+# Configure Nginx to use the custom 404 page
+sudo sed -i '/server_name _;/a \        error_page 404 /custom_404.html;\n        location = /custom_404.html {\n                internal;\n        }' /etc/nginx/sites-available/default
+
+# Add custom header configuration to Nginx
+sudo sed -i "/^http {/a \    add_header X-Served-By $(hostname);" /etc/nginx/nginx.conf
+
+# restart the web server after updating the settings
 sudo service nginx restart
