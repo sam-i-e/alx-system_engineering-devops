@@ -1,4 +1,4 @@
-[[O#!/usr/bin/env bash
+#!/usr/bin/env bash
 # Configures nginx to run on the port 80
 
 # Remove the file before creating a symbolic link

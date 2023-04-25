@@ -1,19 +1,35 @@
-include stdlib
+# A Puppet manifest that sets up an Nginx web server on a server
+# It adds a custom HTTP header with Puppet
 
-
-exec {'install nginx':
-  provider => shell,
-  command  => 'sudo apt-get update; sudo apt-get -y install nginx; echo "Hello World!" | tee /var/www/html/index.html'
+exec { 'update':
+  command => '/usr/bin/apt-get update',
 }
 
-file_line {'Redirection line':
-  ensure => present,
-  path   => '/etc/nginx/sites-available/default',
-  line   => "\tserver_name _;\n\tlocation /redirect_me {\n\t\treturn 301 https://www.youtube.com/watch?v=QH2-TGUlwu4\$request_uri;\n\t}\n\n\tadd_header X-Served-By ${hostname};\n",
-  match  => "\tserver_name _;"
+package { 'nginx':
+  ensure  => installed,
+  require => Exec['update'],
 }
 
-exec {'restart nginx':
-  provider => shell,
-  command  => 'sudo service nginx restart'
+file { '/var/www/html/index.html':
+  ensure  => 'present',
+  content => 'Holberton School',
+  require => Package['nginx'],
+}
+
+file { '/etc/nginx/sites-available/default':
+  ensure  => 'present',
+  require => Package['nginx'],
+}
+
+
+file_line { 'addHeader':
+  ensure  => 'present',
+  path    => '/etc/nginx/sites-available/default',
+  line    => 'add_header X-Served-By $hostname;',
+  require => File['/etc/nginx/sites-available/default'],
+}
+
+service { 'nginx':
+  ensure  => running,
+  require => Package['nginx'],
 }
