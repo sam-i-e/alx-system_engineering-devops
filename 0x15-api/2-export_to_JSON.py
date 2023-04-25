@@ -5,26 +5,18 @@ import requests
 import sys
 
 if __name__ == "__main__":
-    # Get the user ID from command line arguments
     user_id = sys.argv[1]
+    user_url = "https://jsonplaceholder.typicode.com/"
+    user_dict = requests.get(user_url + "users/{}".format(user_id)).json()
+    user_name = user_dict.get("username")
+    user_todos = requests.get(
+        user_url + "todos",
+        params={"userId": user_id}).json()
+    task_list = [{
+        "task": t.get("title"),
+        "completed": t.get("completed"),
+        "username": user_name
+    } for t in user_todos]
 
-    # Define the API endpoint URL
-    url = "https://jsonplaceholder.typicode.com/"
-
-    # Get the user details using the API endpoint and the user ID
-    user = requests.get(url + "users/{}".format(user_id)).json()
-    username = user.get("username")
-
-    # Get the to-do list of the user using the API endpoint and the user ID
-    todos = requests.get(url + "todos", params={"userId": user_id}).json()
-
-    # Write the user to-do list information to a JSON file
     with open("{}.json".format(user_id), "w") as jsonfile:
-        # Write the information as a dictionary, with the key as the user ID
-        # and the value as a list of dictionaries, each containing information
-        # about a to-do task
-        json.dump({user_id: [{
-                "task": t.get("title"),
-                "completed": t.get("completed"),
-                "username": username
-            } for t in todos]}, jsonfile)
+        json.dump({user_id: task_list}, jsonfile)
