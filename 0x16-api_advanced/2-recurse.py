@@ -1,27 +1,30 @@
 #!/usr/bin/python3
 """This function queries a list of all hot posts on a given subreddit on Reddit."""
 
+import os
 import requests
 
 
-def recurse(subreddit, hot_list=[]):
-    """Return list of all hot post"""
-    url = "https://www.reddit.com/r/{subreddit}/hot.json?limit=100"
-    headers = {"User-Agent": "My Agent"}
-    response = requests.get(url, headers=headers, allow_redirects=False)
-
+def recurse(subreddit, hot_list=[], after="", len_list=0):
+    '''
+    Recursively lists all files in a directory
+    '''
+    url = 'https://www.reddit.com/r/{}/hot.json'.format(subreddit)
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
+    params = {
+            'after': after,
+            'limit': 100,
+            'count': len_list
+            }
+    response = requests.get(url, headers=headers, params=params,
+                            allow_redirects=False)
     if response.status_code == 200:
         data = response.json()
-        posts = data["data"]["children"]
-
-        for post in posts:
-            title = post["data"]["title"]
-            hot_list.append(title)
-
-        after = data["data"]["after"]
-        if after is not None:
-            return recurse(subreddit, hot_list=hot_list)
-        else:
+        children = data['data']['children']
+        for child in children:
+            result = child['data']['title']
+            hot_list.append(result)
+        after = data['data']['after']
+        if after is None:
             return hot_list
-    else:
-        return None
+        return recurse(subreddit, hot_list, after, len(hot_list))
